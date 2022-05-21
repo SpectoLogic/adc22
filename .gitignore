@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/b2c/adc22b2cprovider/Deploy.zip
+/b2c/emptyApp/Deploy.zip
