@@ -2,6 +2,7 @@ using adc22config.Models;
 using adc22config.Services;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
+using Microsoft.FeatureManagement;
 
 IConfigurationRefresher? _refresher = null;
 
@@ -26,7 +27,8 @@ builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
                         .SetCacheExpiration(TimeSpan.FromDays(30)); // Important: Reduce poll frequency
                 })
                 .Select(KeyFilter.Any, LabelFilter.Null)
-                .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName);
+                .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
+                .UseFeatureFlags(); // Add for DEV/Prod
             _refresher = options.GetRefresher();
         });
     }
@@ -50,12 +52,14 @@ builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
                 })
                 .Select(KeyFilter.Any, LabelFilter.Null)
                 .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
+                .UseFeatureFlags() // Add for DEV/Prod
         );
     }
 });
 
 // Add services to the container.
 builder.Services.Configure<Settings>(builder.Configuration.GetSection("TestApp:Settings"));
+builder.Services.AddFeatureManagement();
 builder.Services.AddControllersWithViews();
 builder.Services.AddAzureAppConfiguration();
 builder.Services.AddHostedService<ConfigurationUpdateService>();
