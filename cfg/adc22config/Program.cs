@@ -1,4 +1,18 @@
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
+{
+    var settings = config.Build();
+    var connection = settings.GetConnectionString("AppConfig");
+    config.AddAzureAppConfiguration(options =>
+        options
+            .Connect(connection)
+            .Select(KeyFilter.Any, LabelFilter.Null)
+            .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
+    );
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
