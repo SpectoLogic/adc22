@@ -1,3 +1,4 @@
+using adc22config.Models;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 
@@ -12,6 +13,13 @@ builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
         config.AddAzureAppConfiguration(options =>
             options
                 .Connect(connection)
+                .ConfigureRefresh(refresh =>
+                {
+                    refresh.Register("TestApp:Settings:Sentinel",
+                        /* hostingContext.HostingEnvironment.EnvironmentName, */
+                        true)
+                        .SetCacheExpiration(TimeSpan.FromSeconds(30));
+                })
                 .Select(KeyFilter.Any, LabelFilter.Null)
                 .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
         );
@@ -27,6 +35,13 @@ builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
                 {
                     kv.SetCredential(credentials);
                 })
+                .ConfigureRefresh(refresh =>
+                {
+                    refresh.Register("TestApp:Settings:Sentinel",
+                        /* hostingContext.HostingEnvironment.EnvironmentName, */
+                        true)
+                        .SetCacheExpiration(TimeSpan.FromSeconds(30));
+                })
                 .Select(KeyFilter.Any, LabelFilter.Null)
                 .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
         );
@@ -34,7 +49,9 @@ builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
 });
 
 // Add services to the container.
+builder.Services.Configure<Settings>(builder.Configuration.GetSection("TestApp:Settings"));
 builder.Services.AddControllersWithViews();
+builder.Services.AddAzureAppConfiguration();
 
 var app = builder.Build();
 
@@ -46,6 +63,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseAzureAppConfiguration();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
