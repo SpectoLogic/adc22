@@ -5,28 +5,32 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
 {
-	var settings = config.Build();
-	if (hostingContext.HostingEnvironment.IsDevelopment())
-	{
-		var connection = settings.GetConnectionString("AppConfig");
-		config.AddAzureAppConfiguration(options =>
-			options
-				.Connect(connection)
-				.Select(KeyFilter.Any, LabelFilter.Null)
-				.Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
-		);
-	}
-	else
-	{
-		ManagedIdentityCredential credentials = new ManagedIdentityCredential();
-		var appConfigUrl = settings.GetConnectionString("AppConfigUrl");
-		config.AddAzureAppConfiguration(options =>
-			options
-				.Connect(new Uri(appConfigUrl), credentials)
-				.Select(KeyFilter.Any, LabelFilter.Null)
-				.Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
-		);
-	}
+    var settings = config.Build();
+    if (hostingContext.HostingEnvironment.IsDevelopment())
+    {
+        var connection = settings.GetConnectionString("AppConfig");
+        config.AddAzureAppConfiguration(options =>
+            options
+                .Connect(connection)
+                .Select(KeyFilter.Any, LabelFilter.Null)
+                .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
+        );
+    }
+    else
+    {
+        ManagedIdentityCredential credentials = new ManagedIdentityCredential();
+        var appConfigUrl = settings.GetConnectionString("AppConfigUrl");
+        config.AddAzureAppConfiguration(options =>
+            options
+                .Connect(new Uri(appConfigUrl), credentials)
+                .ConfigureKeyVault(kv =>
+                {
+                    kv.SetCredential(credentials);
+                })
+                .Select(KeyFilter.Any, LabelFilter.Null)
+                .Select(KeyFilter.Any, hostingContext.HostingEnvironment.EnvironmentName)
+        );
+    }
 });
 
 // Add services to the container.
