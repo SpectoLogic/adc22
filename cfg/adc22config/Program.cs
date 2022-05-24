@@ -3,6 +3,7 @@ using adc22config.Services;
 using Azure.Identity;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Microsoft.FeatureManagement;
+using Microsoft.FeatureManagement.FeatureFilters;
 
 IConfigurationRefresher? _refresher = null;
 
@@ -59,11 +60,13 @@ builder.Host.ConfigureAppConfiguration((hostingContext, config) =>
 
 // Add services to the container.
 builder.Services.Configure<Settings>(builder.Configuration.GetSection("TestApp:Settings"));
-builder.Services.AddFeatureManagement();
+builder.Services.AddFeatureManagement().AddFeatureFilter<PercentageFilter>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddAzureAppConfiguration();
 builder.Services.AddHostedService<ConfigurationUpdateService>();
 builder.Services.AddSingleton<IConfigurationUpdater, ConfigurationUpdater>();
+builder.Services.AddTransient<ISessionManager, StickyFeaturesManager>();
+builder.Services.AddHttpContextAccessor();
 if (_refresher != null) builder.Services.AddSingleton<IConfigurationRefresher>(_refresher);
 
 var app = builder.Build();
